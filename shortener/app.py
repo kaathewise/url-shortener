@@ -34,4 +34,4 @@ def redirect_to_original(url_id):
 
 if __name__ == '__main__':
     init()
-    app.run()
+    app.run(threaded=True)

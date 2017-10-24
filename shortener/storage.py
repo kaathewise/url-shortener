@@ -8,7 +8,7 @@ class Storage:
         self.path = path
 
     def __db_connect(self):
-        return sqlite3.connect(self.path)
+        return sqlite3.connect(self.path, timeout=10)
 
     def encode_id(self, id):
         return base64.urlsafe_b64encode(struct.pack('<Q', id))
