@@ -14,7 +14,7 @@ class Storage:
         return base64.urlsafe_b64encode(struct.pack('<Q', id))
 
     def decode_id(self, id):
-        return struct.unpack('<Q', base64.urlsafe_b64decode(id))[0]
+        return struct.unpack('<Q', base64.urlsafe_b64decode(id.encode('ascii')))[0]
 
     def init_db(self):
       with self.__db_connect() as conn:
@@ -29,10 +29,9 @@ class Storage:
             return self.encode_id(res.lastrowid)
 
     def retrieve(self, id):
-        try:
-            id = self.decode_id(id)
-        except:
-            return None
+        print id
+        id = self.decode_id(id)
+        print id
         with self.__db_connect() as conn:
             cursor = conn.cursor()
             res = cursor.execute('SELECT BASE_URL FROM URL WHERE ID=?;', [id]).fetchone()
