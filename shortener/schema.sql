@@ -1,4 +1,6 @@
+DROP TABLE IF EXISTS `url`;
+
 CREATE TABLE `url` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `base_url` TEXT NOT NULL UNIQUE
-)
+  `base_url` TEXT NOT NULL
+);
