@@ -1,18 +1,19 @@
 from flask import Flask, abort, request, redirect, jsonify
 from urlparse import urlparse
 
-from storage import Storage
+from storage import InMemoryStorage
 
 DATABASE = 'storage.db'
+DEBUG = False
 host = '127.0.0.1:5000/'
 
 app = Flask(__name__)
 app.config.from_object(__name__)
 
-storage = None
+storage = InMemoryStorage(app.config['DATABASE'], 128)
 def init():
-    global storage
-    storage = Storage(app.config['DATABASE'])
+    storage.init_db()
+#init()
 
 @app.route('/shorten_url', methods=['POST'])
 def shorten_url():
@@ -33,5 +34,4 @@ def redirect_to_original(url_id):
 
 
 if __name__ == '__main__':
-    init()
     app.run(threaded=True)
