@@ -1,30 +1,21 @@
 import os
 import unittest
 import tempfile
+import shutil
 
-from storage import Storage
+from storage import SQLiteStorage, ShardedSQLiteStorage, InMemoryStorage, ShardedInMemoryStorage
 
-class StorageTestCase(unittest.TestCase):
-    def setUp(self):
-        self.storage_fd, self.storage_path = tempfile.mkstemp()
-        self.storage = Storage(self.storage_path)
-
-    def tearDown(self):
-        os.close(self.storage_fd)
-        os.unlink(self.storage_path)
-
+class _StorageTestCase(object):
     def testEncoding(self):
         assert self.storage.decode_id(self.storage.encode_id(1)) == 1
         assert self.storage.decode_id(self.storage.encode_id(4294967296)) == 4294967296
 
     def testInsertion(self):
-        self.storage.init_db()
         key = self.storage.insert('google.com')
         assert self.storage.retrieve(key) == 'google.com'
         assert self.storage.retrieve(self.storage.encode_id(12)) is None
 
     def testInsertMultiple(self):
-        self.storage.init_db()
         key1 = self.storage.insert('google.com')
         key2 = self.storage.insert('google.com')
         key3 = self.storage.insert('bit.ly')
@@ -33,9 +24,40 @@ class StorageTestCase(unittest.TestCase):
         assert self.storage.retrieve(key3) == 'bit.ly'
 
     def testInvalidKey(self):
-        self.storage.init_db()
         self.storage.insert('google.com')
         assert self.storage.retrieve('invalid key') is None
+
+
+class SQLiteStorageTestCase(unittest.TestCase, _StorageTestCase):
+    def setUp(self):
+        self.storage_fd, self.storage_path = tempfile.mkstemp()
+        self.storage = SQLiteStorage(self.storage_path)
+        self.storage.init_db()
+
+    def tearDown(self):
+        os.close(self.storage_fd)
+        os.unlink(self.storage_path)
+
+
+class ShardedSQLiteStorageTestCase(unittest.TestCase, _StorageTestCase):
+    def setUp(self):
+        self.storage_path = tempfile.mkdtemp()
+        self.storage = ShardedSQLiteStorage(self.storage_path + '/db')
+        self.storage.init_db()
+
+    def tearDown(self):
+        shutil.rmtree(self.storage_path)
+
+
+class ShardedInMemoryStorageTestCase(unittest.TestCase, _StorageTestCase):
+    def setUp(self):
+        self.storage = ShardedInMemoryStorage()
+
+
+class InMemoryStorageTestCase(unittest.TestCase, _StorageTestCase):
+    def setUp(self):
+        self.storage = InMemoryStorage()
+
 
 if __name__ == '__main__':
     unittest.main()
