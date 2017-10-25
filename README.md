@@ -3,7 +3,7 @@ A comparison of several implementations of a simple url shortener app.
 
 ## Overall design decisions
 * Output urls are unique, would not output the same short url for the same input. Reason: efficiency.
-* Generated ids are Base64-encoded sequential numbers. Reason: simplicity for prototype. Better randomized ids may be added later.
+* Generated ids are Base64-encoded sequential numbers. Reason: simplicity for prototype. Better randomised ids may be added later.
 
 ## App variants
 
@@ -31,7 +31,7 @@ To run the tornado app with in-memory storage, run:
 
 ### Tornado + Redis
 
-A multi-worker implementation using redis as a shared data storage. Utilizes client-side sharding by `task_id`.
+A multi-worker implementation using redis as a shared data storage. Utilises client-side sharding by `task_id`.
 
 Steps to run the tornado app with redis storage:
 1. Run redis: `redis-server redis.conf`
@@ -48,7 +48,7 @@ with parallelisation.
 3. In-memory storage is rather a proof of concept, and has an obvious disadvantage
 of being temporary and bound to a single process. Multiple threads don't help in
 this implementation because the handlers are completely blocking, and don't have
-any IO. That's why tornado is a better choice for this approach.
+any I/O. That's why tornado is a better choice for this approach.
 4. Tornado with multiple workers + redis is the best single-machine solution,
 and is arguably the closest to being production-like (though in this implementation
 key generation is given to workers for efficiency, that certainly should be pushed
