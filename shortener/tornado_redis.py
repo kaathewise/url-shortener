@@ -1,27 +1,23 @@
-import tornado.web
-import tornado.httpserver
-import tornado.ioloop
-from tornado.options import define, options
-from tornado.process import task_id
 import json
 import os
+
+from tornado import gen, web, httpserver, ioloop, process
 from urlparse import urlparse
 from storage import RedisStorage, encode_id
 
-define("port", default=8000, type=int)
 host = '127.0.0.1:8000/'
+PORT = 8000
 num_tasks = 16
 
-counter = 0
-
+next_id = 0
 def get_next_id():
-    global counter
-    counter += num_tasks
-    return counter - task_id()
+    global next_id
+    next_id += num_tasks
+    return next_id - process.task_id()
 
 
-class ShortenUrlHandler(tornado.web.RequestHandler):
-    @tornado.gen.coroutine
+class ShortenUrlHandler(web.RequestHandler):
+    @gen.coroutine
     def post(self):
         url = json.loads(self.request.body)['url']
         parsed_url = urlparse(url, 'http')
@@ -33,12 +29,12 @@ class ShortenUrlHandler(tornado.web.RequestHandler):
             self.write({'short_url': host + key})
 
 
-class RedirectToOriginalHandler(tornado.web.RequestHandler):
-    @tornado.gen.coroutine
+class RedirectToOriginalHandler(web.RequestHandler):
+    @gen.coroutine
     def get(self, url_id):
         url = yield storage.retrieve(url_id.encode('ascii'))
         if url == None:
-            abort(404)
+            self.send_error(404)
         self.redirect(url)
 
 
@@ -48,12 +44,12 @@ urls = [
 ]
 
 def make_app():
-    return tornado.web.Application(urls)
+    return web.Application(urls)
 
 
 if __name__ == "__main__":
-    server = tornado.httpserver.HTTPServer(make_app())
-    server.bind(options.port)
+    server = httpserver.HTTPServer(make_app())
+    server.bind(PORT)
     server.start(num_tasks)
     storage = RedisStorage('localhost', 6379)
-    tornado.ioloop.IOLoop.current().start()
+    ioloop.IOLoop.current().start()

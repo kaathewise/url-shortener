@@ -24,7 +24,7 @@ class SQLiteStorage:
 
     def init_db(self):
       with self.__db_connect() as conn:
-          with open(os.path.dirname(__file__)+'/schema.sql', mode='r') as f:
+          with open(os.path.dirname(__file__) + '/schema.sql', mode='r') as f:
               conn.cursor().executescript(f.read())
 
     def insert(self, url):
@@ -56,7 +56,7 @@ class ShardedSQLiteStorage:
     def init_db(self):
       for shard in xrange(self.shards):
           with self.__db_connect(shard) as conn:
-              with open(os.path.dirname(__file__)+'/schema.sql', mode='r') as f:
+              with open(os.path.dirname(__file__) + '/schema.sql', mode='r') as f:
                   conn.cursor().executescript(f.read())
 
     def insert(self, url):
@@ -84,9 +84,6 @@ class InMemoryStorage:
     def __init__(self):
         self.db = []
 
-    def init_db(self):
-        pass
-
     def insert(self, url):
         self.db.append(url)
         rowid = len(self.db) - 1
@@ -105,9 +102,6 @@ class ShardedInMemoryStorage:
         self.shards = shards
         self.locks = [threading.Lock() for x in xrange(shards)]
         self.db = [[] for i in xrange(shards)]
-
-    def init_db(self):
-        pass
 
     def insert(self, url):
         shard = randint(0, self.shards-1)

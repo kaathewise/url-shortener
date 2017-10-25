@@ -33,6 +33,7 @@ class SQLiteAppTestCase(unittest.TestCase, _AppTestCase):
         self.storage.init_db()
         self.client = app.app.test_client()
         self.client.testing = True
+        app.host = 'localhost'
         app.storage = self.storage
 
     def tearDown(self):
@@ -47,6 +48,7 @@ class ShardedSQLiteStorageTestCase(unittest.TestCase, _AppTestCase):
         self.storage.init_db()
         self.client = app.app.test_client()
         self.client.testing = True
+        app.host = 'localhost'
         app.storage = self.storage
 
     def tearDown(self):
@@ -58,6 +60,7 @@ class ShardedInMemoryStorageTestCase(unittest.TestCase, _AppTestCase):
         self.storage = ShardedInMemoryStorage()
         self.client = app.app.test_client()
         self.client.testing = True
+        app.host = 'localhost'
         app.storage = self.storage
 
 
@@ -66,6 +69,7 @@ class InMemoryStorageTestCase(unittest.TestCase, _AppTestCase):
         self.storage = InMemoryStorage()
         self.client = app.app.test_client()
         self.client.testing = True
+        app.host = 'localhost'
         app.storage = self.storage
 
 
