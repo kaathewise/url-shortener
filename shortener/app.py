@@ -1,7 +1,5 @@
 from flask import Flask, abort, request, redirect, jsonify
-from urlparse import urlparse
-
-import storage as storage_module
+from validators.url import url as validate_url
 
 host = None
 storage = None
@@ -10,10 +8,11 @@ app = Flask(__name__)
 @app.route('/shorten_url', methods=['POST'])
 def shorten_url():
     url = request.get_json(force=True)['url']
-    parsed_url = urlparse(url, 'http')
-    if not parsed_url.netloc and not parsed_url.path:
+    if not '://' in url:
+        url = 'http://' + url
+    if not validate_url(url):
         return jsonify(error = 'Invalid url')
-    key = storage.insert(parsed_url.geturl())
+    key = storage.insert(url)
     return jsonify(short_url = host + '/' + key)
 
 

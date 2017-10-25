@@ -2,7 +2,7 @@ import json
 import os
 
 from tornado import web, httpserver, ioloop, options
-from urlparse import urlparse
+from validators.url import url as validate_url
 from storage import InMemoryStorage
 
 storage = InMemoryStorage()
@@ -13,11 +13,12 @@ host = '127.0.0.1:8000/'
 class ShortenUrlHandler(web.RequestHandler):
     def post(self):
         url = json.loads(self.request.body)['url']
-        parsed_url = urlparse(url, 'http')
-        if not parsed_url.netloc and not parsed_url.path:
+        if not '://' in url:
+            url = 'http://' + url
+        if not validate_url(url):
             self.write({'error': 'Invalid url'})
         else:
-            key = storage.insert(parsed_url.geturl())
+            key = storage.insert(url)
             self.write({'short_url': host + key})
 
 

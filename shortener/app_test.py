@@ -18,7 +18,9 @@ class _AppTestCase(object):
         assert 'google.com' in response.location
 
     def testInvalidRequests(self):
-        response = self.client.post('/shorten_url', data=json.dumps(dict(url='')))
+        response = self.client.post(
+                '/shorten_url',
+                data=json.dumps(dict(url='invalid url')))
         assert json.loads(response.data)['error']
         response = self.client.get('/abcdef')
         assert response.status_code == 404

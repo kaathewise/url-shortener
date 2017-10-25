@@ -12,7 +12,11 @@ A comparison of several implementations of a simple url shortener app.
 Flask implementation is available for 4 storage types (SQLite, sharded SQLite, in-memory, and sharded in-memory), though it would only make sense to use it with SQLite, of which the sharded version has the best performance.
 
 Steps to run the flask app (with flask dev server):
-1. Init the storage: `python -c "from shortener.storage import SQLiteStorage; SQLiteStorage('sqlite/db').init_db()"`
+1. Init the storage:
+```
+mkdir sqlite
+python -c "from shortener.storage import ShardedSQLiteStorage; ShardedSQLiteStorage('sqlite/db').init_db()"
+```
 2. Run with an appropriate configuration:
 `export SHRT_CONFIG=../script/flask_sqlite_sharded.cfg; python shortener/app.py`
 
@@ -51,13 +55,16 @@ key generation is given to workers for efficiency, that certainly should be push
 to the database in the real world). It doesn't write to disc, and can use the cores
 to the max, yay! The obvious downside of redis is it being in-memory as well,
 so some several million of records may consume 8Gb of RAM pretty fast.
+A (sharded) redis cluster or a similar distributed key-value storage may be used
+to productionise this solution.
 
 
 ## Load test measurements
 
 ### Flask + SQLite
 
-```16 threads and 16 connections
+```
+16 threads and 16 connections
 Thread Stats   Avg      Stdev     Max   +/- Stdev
   Latency    55.08ms    7.16ms  80.51ms   76.32%
   Req/Sec    17.84      4.50    30.00     76.96%
@@ -67,7 +74,8 @@ Requests/sec:    286.89
 
 ### Flask (threaded) + ShardedSQLite
 
-```16 threads and 256 connections
+```
+16 threads and 256 connections
 Thread Stats   Avg      Stdev     Max   +/- Stdev
   Latency   355.40ms   54.06ms 463.35ms   77.99%
   Req/Sec    27.84     27.29   161.00     86.36%
@@ -78,7 +86,8 @@ Requests/sec:    357.02
 
 ### Tornado + InMemory
 
-```16 threads and 256 connections
+```
+16 threads and 256 connections
 Thread Stats   Avg      Stdev     Max   +/- Stdev
   Latency   129.99ms   21.23ms 175.52ms   79.73%
   Req/Sec   121.69     58.85   323.00     79.06%
@@ -89,7 +98,8 @@ Requests/sec:   1859.24
 
 ### Tornado (16 workers) + Redis
 
-```16 threads and 256 connections
+```
+16 threads and 256 connections
 Thread Stats   Avg      Stdev     Max   +/- Stdev
   Latency   100.42ms   51.05ms 493.38ms   75.51%
   Req/Sec   164.67     34.11   272.00     69.39%
@@ -97,3 +107,7 @@ Thread Stats   Avg      Stdev     Max   +/- Stdev
 Socket errors: connect 0, read 4, write 4, timeout 0
 Requests/sec:   2592.89
 ```
+
+## TODO
+
+Add tests and external configuration for tornado apps.

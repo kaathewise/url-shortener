@@ -2,7 +2,7 @@ import json
 import os
 
 from tornado import gen, web, httpserver, ioloop, process
-from urlparse import urlparse
+from validators.url import url as validate_url
 from storage import RedisStorage, encode_id
 
 host = '127.0.0.1:8000/'
@@ -20,12 +20,13 @@ class ShortenUrlHandler(web.RequestHandler):
     @gen.coroutine
     def post(self):
         url = json.loads(self.request.body)['url']
-        parsed_url = urlparse(url, 'http')
-        if not parsed_url.netloc and not parsed_url.path:
+        if not '://' in url:
+            url = 'http://' + url
+        if not validate_url(url):
             self.write({'error': 'Invalid url'})
         else:
             key = encode_id(get_next_id())
-            yield storage.insert(parsed_url.geturl(), key)
+            yield storage.insert(url, key)
             self.write({'short_url': host + key})
 
 
