@@ -43,7 +43,7 @@ This app is configured to run with 16 workers, and doesn't yet support external 
 
 1. Single file SQLite is extremely slow because of the lock-based access to a single file.
 2. Sharded SQLite is slightly better, and doesn't have the locking problem, but
-it still has to write to disc, and the threaded implementation doesn't really help
+it still has to write to disk, and the threaded implementation doesn't really help
 with parallelisation.
 3. In-memory storage is rather a proof of concept, and has an obvious disadvantage
 of being temporary and bound to a single process. Multiple threads don't help in
@@ -52,7 +52,7 @@ any IO. That's why tornado is a better choice for this approach.
 4. Tornado with multiple workers + redis is the best single-machine solution,
 and is arguably the closest to being production-like (though in this implementation
 key generation is given to workers for efficiency, that certainly should be pushed
-to the database in the real world). It doesn't write to disc, and can use the cores
+to the database in the real world). It doesn't write to disk, and can utilise the cores
 to the max, yay! The obvious downside of redis is it being in-memory as well,
 so some several million of records may consume 8Gb of RAM pretty fast.
 A (sharded) redis cluster or a similar distributed key-value storage may be used
