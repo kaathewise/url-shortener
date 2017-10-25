@@ -2,18 +2,15 @@ import os
 import unittest
 import tempfile
 import shutil
+import storage
 
 from storage import SQLiteStorage, ShardedSQLiteStorage, InMemoryStorage, ShardedInMemoryStorage
 
 class _StorageTestCase(object):
-    def testEncoding(self):
-        assert self.storage.decode_id(self.storage.encode_id(1)) == 1
-        assert self.storage.decode_id(self.storage.encode_id(4294967296)) == 4294967296
-
     def testInsertion(self):
         key = self.storage.insert('google.com')
         assert self.storage.retrieve(key) == 'google.com'
-        assert self.storage.retrieve(self.storage.encode_id(12)) is None
+        assert self.storage.retrieve(storage.encode_id(12)) is None
 
     def testInsertMultiple(self):
         key1 = self.storage.insert('google.com')
@@ -26,6 +23,12 @@ class _StorageTestCase(object):
     def testInvalidKey(self):
         self.storage.insert('google.com')
         assert self.storage.retrieve('invalid key') is None
+
+
+class EncodingTest(unittest.TestCase):
+    def testEncoding(self):
+        assert storage.decode_id(storage.encode_id(1)) == 1
+        assert storage.decode_id(storage.encode_id(4294967296)) == 4294967296
 
 
 class SQLiteStorageTestCase(unittest.TestCase, _StorageTestCase):

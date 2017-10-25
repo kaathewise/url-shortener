@@ -5,7 +5,8 @@ from storage import ShardedInMemoryStorage
 
 DATABASE = 'storage.db'
 DEBUG = False
-host = '127.0.0.1:5000/'
+PORT = 8000
+host = '127.0.0.1:8000/'
 
 app = Flask(__name__)
 app.config.from_object(__name__)

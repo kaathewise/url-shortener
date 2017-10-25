@@ -3,18 +3,19 @@ import os
 import struct
 import sqlite3
 import threading
+import tornado
+import tornadis
 
 from random import randint
 
-class IntKeyedStorage:
-    def encode_id(self, id):
-        return base64.urlsafe_b64encode(struct.pack('<Q', id))
+def encode_id(id):
+    return base64.urlsafe_b64encode(struct.pack('<Q', id))
 
-    def decode_id(self, id):
-        return struct.unpack('<Q', base64.urlsafe_b64decode(id))[0]
+def decode_id(id):
+    return struct.unpack('<Q', base64.urlsafe_b64decode(id))[0]
 
 
-class SQLiteStorage(IntKeyedStorage):
+class SQLiteStorage:
     def __init__(self, path):
         self.path = path
 
@@ -31,11 +32,11 @@ class SQLiteStorage(IntKeyedStorage):
             cursor = conn.cursor()
             res = cursor.execute(
                 'INSERT INTO URL (BASE_URL) VALUES (?);', [url])
-            return self.encode_id(res.lastrowid)
+            return encode_id(res.lastrowid)
 
     def retrieve(self, id):
         try:
-            id = self.decode_id(id)
+            id = decode_id(id)
         except:
             return None
         with self.__db_connect() as conn:
@@ -44,7 +45,7 @@ class SQLiteStorage(IntKeyedStorage):
             return res[0] if res else None
 
 
-class ShardedSQLiteStorage(IntKeyedStorage):
+class ShardedSQLiteStorage:
     def __init__(self, base_path, shards=64):
         self.base_path = base_path
         self.shards = shards
@@ -64,11 +65,11 @@ class ShardedSQLiteStorage(IntKeyedStorage):
             cursor = conn.cursor()
             res = cursor.execute(
                 'INSERT INTO URL (BASE_URL) VALUES (?);', [url])
-            return self.encode_id(res.lastrowid * self.shards + shard)
+            return encode_id(res.lastrowid * self.shards + shard)
 
     def retrieve(self, id):
         try:
-            id = self.decode_id(id)
+            id = decode_id(id)
         except:
             return None
         shard = id % self.shards
@@ -79,7 +80,7 @@ class ShardedSQLiteStorage(IntKeyedStorage):
             return res[0] if res else None
 
 
-class InMemoryStorage(IntKeyedStorage):
+class InMemoryStorage:
     def __init__(self):
         self.db = []
 
@@ -89,17 +90,17 @@ class InMemoryStorage(IntKeyedStorage):
     def insert(self, url):
         self.db.append(url)
         rowid = len(self.db) - 1
-        return self.encode_id(rowid)
+        return encode_id(rowid)
 
     def retrieve(self, id):
         try:
-            id = self.decode_id(id)
+            id = decode_id(id)
         except:
             return None
         return self.db[id] if len(self.db) > id else None
 
 
-class ShardedInMemoryStorage(IntKeyedStorage):
+class ShardedInMemoryStorage:
     def __init__(self, shards=128):
         self.shards = shards
         self.locks = [threading.Lock() for x in xrange(shards)]
@@ -113,13 +114,28 @@ class ShardedInMemoryStorage(IntKeyedStorage):
         with self.locks[shard]:
             self.db[shard].append(url)
             rowid = len(self.db[shard]) - 1
-            return self.encode_id(rowid * self.shards + shard)
+            return encode_id(rowid * self.shards + shard)
 
     def retrieve(self, id):
         try:
-            id = self.decode_id(id)
+            id = decode_id(id)
         except:
             return None
         shard = id % self.shards
         id = id // self.shards
         return self.db[shard][id] if len(self.db[shard]) > id else None
+
+
+class RedisStorage:
+    def __init__(self, host, port):
+        self.client = tornadis.Client(host=host, port=port, autoconnect=True)
+
+    @tornado.gen.coroutine
+    def insert(self, url, id):
+        yield self.client.call('SET', id, url)
+
+    @tornado.gen.coroutine
+    def retrieve(self, id):
+        url = yield self.client.call('GET', id)
+        raise tornado.gen.Return(
+            None if isinstance(url, tornadis.TornadisException) else url)
