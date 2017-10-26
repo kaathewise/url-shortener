@@ -121,12 +121,21 @@ class ShardedInMemoryStorage:
 
 
 class RedisStorage:
-    def __init__(self, host, port):
+    def __init__(self, host, port, num_processes):
         self.client = tornadis.Client(host=host, port=port, autoconnect=True)
+        self.num_processes = num_processes
+        self.next_id = tornado.process.task_id()
+
+    # Should be moved to the database for persistence.
+    def get_next_id(self):
+        self.next_id = self.next_id + self.num_processes
+        return encode_id(self.next_id)
 
     @tornado.gen.coroutine
-    def insert(self, url, id):
+    def insert(self, url):
+        id = self.get_next_id()
         yield self.client.call('SET', id, url)
+        raise tornado.gen.Return(id)
 
     @tornado.gen.coroutine
     def retrieve(self, id):
